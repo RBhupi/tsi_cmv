@@ -9,6 +9,27 @@ Parts of this module are adopted from TINT module phase_correlation.py
 
 import numpy as np
 from scipy import ndimage
+import cv2 as cv
+
+def openVideoFile(fname):
+    video_cap = cv.VideoCapture(fname)
+    if not video_cap.isOpened():
+        print('Unable to open: ', fname)
+        exit(0)
+        
+    return video_cap
+
+
+
+def readVideoFrame(fcount, capture):
+        ret, frame = capture.read()
+        fcount +=1 
+    
+        if not ret:
+            capture.release()
+            print("End of video reached!")
+            exit()
+        return fcount, frame
 
 
 def flowVectorSplit(array1, array2, nblock):
@@ -19,10 +40,32 @@ def flowVectorSplit(array1, array2, nblock):
     cmv_y = np.zeros(nblock*nblock)
     for i in range(nblock*nblock):
         cmv_x[i], cmv_y[i] = fftFlowVector(array1_split[i], array2_split[i])
-        
+    
+    cmv_x, cmv_y = rmLargeValues(cmv_x, cmv_y)
+    
     cmv_x = cmv_x.reshape([nblock, nblock])
     cmv_y = cmv_y.reshape([nblock, nblock])
     return cmv_x, cmv_y
+
+def rmLargeValues(cmv_x, cmv_y, std_fact=1):
+    
+    vmag, vdir = vectorMagnitudeDirection(cmv_x, cmv_y)
+    vmag_std = vmag[vmag>0].std()
+    
+    for i in range(0, cmv_x.size):
+            if vmag[i]> vmag_std*std_fact:
+                cmv_x[i]=0
+                cmv_y[i]=0
+    
+    return cmv_x, cmv_y
+
+
+def vectorMagnitudeDirection(cmv_x, cmv_y, std_fact=1):
+    vec_mag = np.sqrt(cmv_x*cmv_x + cmv_y*cmv_y)
+    
+    #confirm this statement, we are not using this at this time
+    #vec_dir = (270-np.rad2deg(np.arctan2(cmv_x,cmv_y)))%360 
+    return vec_mag, np.NAN #vec_dir
 
 
 def fftFlowVector(im1, im2, global_shift=True):
