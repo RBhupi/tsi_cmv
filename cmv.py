@@ -12,7 +12,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from sys import exit
 
-from cmvUtils import flowVectorSplit, fftFlowVector
+from cmvUtils import openVideoFile, readVideoFrame, flowVectorSplit
 
 parser = argparse.ArgumentParser(description='''This program uses phase correlation method from the TINT module
                                               to compute the cloud motion vectors in the hemispheric camera video''')
@@ -22,16 +22,12 @@ parser.add_argument('--fskip', type=str, help='Background subtraction method (KN
 args = parser.parse_args()
 
 chan = 2 # The program does not use all the RGB channels
-nblock = 7
+nblock = 14
 
 print('Opening:', args.input)
 
-video_cap = cv.VideoCapture(args.input)
+video_cap = openVideoFile(args.input)
 
-if not video_cap.isOpened():
-    print('Unable to open: ', args.input)
-    exit(0)
-    
 # showing video properties
 print("Original Frame width '{}'".format(video_cap.get(cv.CAP_PROP_FRAME_WIDTH)))
 print("Original Frame Height : '{}'".format(video_cap.get(cv.CAP_PROP_FRAME_HEIGHT)))
@@ -43,22 +39,20 @@ fcount = 0
 first_frame = True
 plt.ion()
 flow_plot= plt.figure()
+
 while video_cap.isOpened():
-    ret, frame = video_cap.read()
-    fcount +=1 
+    fcount, frame = readVideoFrame(fcount, video_cap)
     
-    if not ret:
-        video_cap.release()
-        print("End of video reached!")
-        break
-    
+
+    # We skip given number of frames to compute the flow
     if fcount==1 or fcount % args.fskip == 0:
         print('Current Frame:', fcount)
         sky = frame[101:549, 16:464, chan] #too specific
-        
+      
         #Store the sky data for first the frame as .
         if first_frame:
             sky_curr = sky
+            sky_for_plot1 = frame[101:549, 16:464, :]
             first_frame = False
             continue
 
@@ -66,19 +60,22 @@ while video_cap.isOpened():
         sky_prev = sky_curr
         sky_curr = sky
         
-        
-        
-        mean_motion = fftFlowVector(sky_prev, sky_curr, global_shift=True)
-        print(mean_motion)
+        sky_for_plot = sky_for_plot1
+        sky_for_plot = cv.cvtColor(sky_for_plot, cv.COLOR_BGR2RGB)
+        sky_for_plot1 = frame[101:549, 16:464, :]
+    
         
         cmv_x, cmv_y = flowVectorSplit(sky_prev, sky_curr, nblock)
-        
+        #exit()
 
-        #comput centra point for plotting arrows
-        arrow_loc = np.arange(31, 448, 64)
+        #compute central points for plotting the arrows
+        arrow_loc = np.arange(15, 448, 32)
         
-        plt.imshow(sky_prev)
-        plt.quiver(arrow_loc, arrow_loc, cmv_y, -cmv_x)
+        plt.imshow(sky_for_plot)
+        plt.quiver(arrow_loc, arrow_loc, cmv_y, -cmv_x, scale=30)
+        
+        fig_path = "./plots/image"+f'{fcount:05d}'+".png"
+        plt.savefig(fig_path)
         plt.pause(0.3)
         plt.close()
 
@@ -87,11 +84,6 @@ plt.show()
 plt.ioff()
 
         
-        
-        
-        #cv.imshow("Original", frame)
-        #cv.waitKey(1000)
-        #exit()
         
         
         
