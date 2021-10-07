@@ -12,6 +12,20 @@ from scipy import ndimage
 import cv2 as cv
 
 def openVideoFile(fname):
+    """
+    Opens video file using openCV VideoCapture.
+    
+    Exits when file is not availbale. 
+
+    Parameters
+    ----------
+    fname : input file 
+
+    Returns captured object
+    -------
+    video_cap : openCV VideoCapture object
+
+    """
     video_cap = cv.VideoCapture(fname)
     if not video_cap.isOpened():
         print('Unable to open: ', fname)
@@ -22,17 +36,51 @@ def openVideoFile(fname):
 
 
 def readVideoFrame(fcount, capture):
-        ret, frame = capture.read()
-        fcount +=1 
+    """
+    Exits when file ends.
     
-        if not ret:
-            capture.release()
-            print("End of video reached!")
-            exit()
-        return fcount, frame
+    Parameters
+    ----------
+    fcount : frame read till now
+    capture : openCV VideoCapture object
+
+    Returns
+    -------
+    fcount : frame count increamented by 1
+    frame : video frame 
+
+    """
+    ret, frame = capture.read()
+    fcount +=1 
+
+    if not ret:
+        capture.release()
+        print("End of video reached!")
+        exit()
+    return fcount, frame
 
 
 def flowVectorSplit(array1, array2, nblock):
+    """
+    Splits camera view into a grid, and computes flow vectors for each block.
+
+    Parameters
+    ----------
+    array1 : Numpy array
+        First image
+    array2 : Numpy array
+        Second image
+    nblock : Integer
+        Number of blocks in x and y direction.
+
+    Returns
+    -------
+    cmv_x : u component of CMV.
+    cmv_y : v component of CMV.
+    
+    @ToDo: nblocks should be provided for both x and y direction to accomodate non-squared area, if needed.
+    
+    """
     array1_split = split2DArray(array1, nblock)
     array2_split = split2DArray(array2, nblock)
     
@@ -48,6 +96,24 @@ def flowVectorSplit(array1, array2, nblock):
     return cmv_x, cmv_y
 
 def rmLargeValues(cmv_x, cmv_y, std_fact=1):
+    """
+    Remove large anomalous values. Not using direction.
+
+    Parameters
+    ----------
+    cmv_x : u component of CMV.
+    cmv_y : v component of CMV.
+    
+    std_fact : TYPE, optional
+        DESCRIPTION. The default is 1.
+
+    Returns
+    -------
+    cmv_x : Corrected u component of CMV.
+    cmv_y : Corrected v component of CMV.
+        DESCRIPTION.
+
+    """
     
     vmag, vdir = vectorMagnitudeDirection(cmv_x, cmv_y)
     vmag_std = vmag[vmag>0].std()
@@ -61,6 +127,26 @@ def rmLargeValues(cmv_x, cmv_y, std_fact=1):
 
 
 def vectorMagnitudeDirection(cmv_x, cmv_y, std_fact=1):
+    """
+    incomplete function but working
+
+    Parameters
+    ----------
+    cmv_x : TYPE
+        DESCRIPTION.
+    cmv_y : TYPE
+        DESCRIPTION.
+    std_fact : TYPE, optional
+        DESCRIPTION. The default is 1.
+
+    Returns
+    -------
+    vec_mag : TYPE
+        DESCRIPTION.
+    TYPE
+        DESCRIPTION.
+
+    """
     vec_mag = np.sqrt(cmv_x*cmv_x + cmv_y*cmv_y)
     
     #confirm this statement, we are not using this at this time
@@ -121,9 +207,9 @@ def motionVector(fft_mat):
         return
 
 
-#Splits sky into given number of blocks. Not tested for uneven shapes 
-#or nonfitting arrays
+
 def split2DArray(arr2d, nblock):
+    """ Splits sky into given number of blocks. Not tested for uneven shapes or nonfitting arrays """
     split_0 = np.array_split(arr2d, nblock, axis=0)
     split_arr=[]
     for arr in split_0:
