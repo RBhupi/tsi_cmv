@@ -3,7 +3,7 @@
 """
 Created on Wed Oct  6 17:17:43 2021
 
-@author: bhupendra
+@author: Bhupendra Raut
 """
 
 from netCDF4 import Dataset  
@@ -13,6 +13,22 @@ nblock=14
 ofile = './data/new.nc'
 
 def creatNetCDF(fname, x_loc, y_loc, ):
+    """ Create nc4 file for writing CMV data.
+
+    Parameters
+    ----------
+    fname : String
+        File name.
+    x_loc : Numpy array
+        X-cordinate of the mid points of the blocks where CMVs are computed.
+    y_loc : Numpy array
+        Y-cordinate of the mid points of the blocks where CMVs are computed.
+
+    Returns
+    -------
+    None.
+
+    """
     ncfile = Dataset(fname, mode='w',format='NETCDF4_CLASSIC') 
     nblock_x = x_loc.size
     nblock_y = y_loc.size
@@ -52,6 +68,27 @@ def creatNetCDF(fname, x_loc, y_loc, ):
 
 
 def writeCMVtoNC(nc_name, u, v, frame2_num, tcount):
+    """
+    
+
+    Parameters
+    ----------
+    nc_name : String
+        NetCDF file to append the data.
+    u : Numpy array
+        u component of CMV.
+    v : Numpy array
+        u component of CMV.
+    frame2_num : Integer
+        Frame number of the second frame used in computing CMV.
+    tcount : Integer
+        Time index for writing in the netCDF file.
+
+    Returns
+    -------
+    None.
+
+    """
     ncfile = Dataset(nc_name, mode="a")
     ncfile['time'][tcount] = frame2_num
     ncfile['u'][tcount, :, :] = u
