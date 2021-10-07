@@ -51,11 +51,11 @@ def creatNetCDF(fname, x_loc, y_loc, ):
     time.units = 'frame2 number'
     time.long_name = 'time steps'
     
-    u = ncfile.createVariable('u', np.float32, ('time','x','y'))
+    u = ncfile.createVariable('u', np.float32, ('time','x','y'), zlib=True, complevel=9)
     u.units = 'pixels'
     u.long_name = 'u component'
     
-    v = ncfile.createVariable('v', np.float32, ('time','x','y'))
+    v = ncfile.createVariable('v', np.float32, ('time','x','y'), zlib=True, complevel=9)
     v.units = 'pixels'
     v.long_name = 'v component'
     
