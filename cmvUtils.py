@@ -93,7 +93,24 @@ def flowVectorSplit(array1, array2, nblock):
     
     cmv_x = cmv_x.reshape([nblock, nblock])
     cmv_y = cmv_y.reshape([nblock, nblock])
+    
+    cmv_x, cmv_y = correctOrientationAndOrderOfCMVsDueToUnknownIssue(cmv_x, cmv_y)
+    
     return cmv_x, cmv_y
+
+
+
+def correctOrientationAndOrderOfCMVsDueToUnknownIssue(cmv_x, cmv_y):
+    """ ????? I don't know why x and y are swapped????????
+    So I am correcting their order in this fuction. If someone can get to 
+    the root of this, then this weirdly named function can be removed.
+    """
+    cmv_x_correct = np.flip(cmv_y, axis=0)
+    cmv_y_correct = np.flip(-cmv_x, axis=0)
+    
+    return cmv_x_correct, cmv_y_correct
+
+
 
 def rmLargeValues(cmv_x, cmv_y, std_fact=1):
     """
