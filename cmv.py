@@ -8,11 +8,12 @@ Created on Mon Oct 4 10:03:50 2021
 
 import argparse
 import cv2 as cv
-import numpy as np
+
 #from matplotlib import pyplot as plt
 import sys
+from os.path import basename, dirname, join
 
-from cmvUtils import openVideoFile, readVideoFrame, flowVectorSplit
+from cmvUtils import openVideoFile, videoCropInfo, readVideoFrame, flowVectorSplit
 from outNC import creatNetCDF, writeCMVtoNC
 
 parser = argparse.ArgumentParser(description='''This program uses phase correlation method from the TINT module
@@ -22,22 +23,31 @@ parser.add_argument('--fskip', type=str, help='Background subtraction method (KN
 
 args = parser.parse_args()
 
+
 chan = 2 # The program does not use all the RGB channels
+
+#Divide the sky view into the square blocks of block size, say 32x32 pixels
 nblock = 14
-#compute central points for plotting the arrows
-arrow_loc = np.arange(15, 448, 32)
+block_len = 32
+
+
+
 
 print('Opening:', args.input)
 
 video_cap = openVideoFile(args.input)
 
+#get video and crop regin info
+inf = videoCropInfo(video_cap, nblock, block_len)
+
 # showing video properties
-print("Original Frame width '{}'".format(video_cap.get(cv.CAP_PROP_FRAME_WIDTH)))
-print("Original Frame Height : '{}'".format(video_cap.get(cv.CAP_PROP_FRAME_HEIGHT)))
+print("Original Frame width '{}'".format(inf['frame_width']))
+print("Original Frame Height : '{}'".format(inf['frame_height']))
+print("Using cropped region: ", inf['x1'],":", inf['x2'], ",", inf['y1'], ":", inf['y2'])
 
-ofile = "./data/new.nc"
+ofile = join(dirname(args.input),"CMV_"+basename(args.input).replace(".mpg", ".nc"))
 
-creatNetCDF(ofile, arrow_loc, arrow_loc)
+creatNetCDF(ofile, inf['block_mid'])
 
 
 fcount = 0
@@ -56,24 +66,25 @@ while video_cap.isOpened():
         sys.stdout.write('Current Frame:' + str(fcount)+ '\r')
         sys.stdout.flush()
         
-        sky = frame[101:549, 16:464, chan] #too specific
+        sky_new = frame[inf['x1']:inf['x2'], inf['y1']:inf['y2'], chan] #too specific
       
         #Store the sky data for first the frame as .
         if first_frame:
-            sky_curr = sky
-            sky_for_plot1 = frame[101:549, 16:464, :]
+            sky_curr = sky_new
+            sky_for_plot1 = frame[inf['x1']:inf['x2'], inf['y1']:inf['y2'], :]
             first_frame = False
             continue
 
         #move one frame forward
         sky_prev = sky_curr
-        sky_curr = sky
+        sky_curr = sky_new
         
+        #I want to plot the frame1 with the arrow showing motion to next frame.
         sky_for_plot = sky_for_plot1
         sky_for_plot = cv.cvtColor(sky_for_plot, cv.COLOR_BGR2RGB)
-        sky_for_plot1 = frame[101:549, 16:464, :]
+        sky_for_plot1 = frame[inf['x1']:inf['x2'], inf['y1']:inf['y2'], :]
     
-        
+
         cmv_x, cmv_y = flowVectorSplit(sky_prev, sky_curr, nblock)
         
         writeCMVtoNC(ofile, cmv_x, cmv_y, fcount, tcount)

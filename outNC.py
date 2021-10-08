@@ -12,17 +12,15 @@ import numpy as np
 nblock=14
 ofile = './data/new.nc'
 
-def creatNetCDF(fname, x_loc, y_loc, ):
+def creatNetCDF(fname, block_mids):
     """ Create nc4 file for writing CMV data.
 
     Parameters
     ----------
     fname : String
         File name.
-    x_loc : Numpy array
-        X-cordinate of the mid points of the blocks where CMVs are computed.
-    y_loc : Numpy array
-        Y-cordinate of the mid points of the blocks where CMVs are computed.
+    block : Numpy array
+        Cordinate of the mid points of the blocks where CMVs are computed.
 
     Returns
     -------
@@ -30,11 +28,10 @@ def creatNetCDF(fname, x_loc, y_loc, ):
 
     """
     ncfile = Dataset(fname, mode='w',format='NETCDF4_CLASSIC') 
-    nblock_x = x_loc.size
-    nblock_y = y_loc.size
+    nblock = block_mids.size
     
-    x_dim = ncfile.createDimension('x', nblock_x)     
-    y_dim = ncfile.createDimension('y', nblock_y)
+    x_dim = ncfile.createDimension('x', nblock)     
+    y_dim = ncfile.createDimension('y', nblock)
     t_dim = ncfile.createDimension('time', None) # unlimited time axis 
     ncfile.title='CMV data'
     ncfile.subtitle="CMVs computed using phase correlation method in hemispheric camera images."
@@ -59,8 +56,8 @@ def creatNetCDF(fname, x_loc, y_loc, ):
     v.units = 'pixels'
     v.long_name = 'v component'
     
-    x[:] = x_loc
-    y[:] = y_loc
+    x[:] = block_mids
+    y[:] = block_mids
     
     ncfile.close()
     return

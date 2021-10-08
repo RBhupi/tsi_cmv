@@ -35,6 +35,22 @@ def openVideoFile(fname):
 
 
 
+def videoCropInfo(video_cap, nblock, block_len):
+    frame_width = video_cap.get(cv.CAP_PROP_FRAME_WIDTH)
+    frame_height = video_cap.get(cv.CAP_PROP_FRAME_HEIGHT)
+    #crop a square region of interest to accomodate 
+    x1 = int((frame_height/2)-(nblock/2*block_len))
+    x2 = int((frame_height/2)+(nblock/2*block_len))
+    y1 = int((frame_width/2)-(nblock/2*block_len))
+    y2 = int((frame_width/2)+(nblock/2*block_len))
+    
+    #compute approximate central points of each block
+    mid_loc = np.arange((block_len/2)-1, nblock*block_len, block_len)
+    return dict(frame_width=frame_width, frame_height=frame_height, 
+                x1=x1, x2=x2, y1=y1, y2=y2, block_mid=mid_loc)
+
+
+
 def readVideoFrame(fcount, capture):
     """
     Exits when file ends.
