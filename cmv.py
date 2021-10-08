@@ -13,7 +13,8 @@ import cv2 as cv
 import sys
 from os.path import basename, dirname, join
 
-from cmvUtils import openVideoFile, videoCropInfo, readVideoFrame, flowVectorSplit
+from videoRead import openVideoFile, videoCropInfo, readVideoFrame
+from cmvUtils import flowVectorSplit
 from outNC import creatNetCDF, writeCMVtoNC
 
 parser = argparse.ArgumentParser(description='''This program uses phase correlation method from the TINT module
@@ -23,21 +24,18 @@ parser.add_argument('--fskip', type=str, help='Background subtraction method (KN
 
 args = parser.parse_args()
 
-
-chan = 2 # The program does not use all the RGB channels
-
-#Divide the sky view into the square blocks of block size, say 32x32 pixels
+# Can not use all the RGB channels, so select one
+chan = 2 #0-2
+#The sky view will be divided into the square blocks of block size, say 32x32 pixels
 nblock = 14
 block_len = 32
-
-
 
 
 print('Opening:', args.input)
 
 video_cap = openVideoFile(args.input)
 
-#get video and crop regin info
+#get video frame and cropping info in a dictinary
 inf = videoCropInfo(video_cap, nblock, block_len)
 
 # showing video properties
@@ -45,8 +43,8 @@ print("Original Frame width '{}'".format(inf['frame_width']))
 print("Original Frame Height : '{}'".format(inf['frame_height']))
 print("Using cropped region: ", inf['x1'],":", inf['x2'], ",", inf['y1'], ":", inf['y2'])
 
+#make output netCDF file
 ofile = join(dirname(args.input),"CMV_"+basename(args.input).replace(".mpg", ".nc"))
-
 creatNetCDF(ofile, inf['block_mid'])
 
 
