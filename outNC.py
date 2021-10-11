@@ -8,34 +8,35 @@ Created on Wed Oct  6 17:17:43 2021
 
 from netCDF4 import Dataset  
 import numpy as np
-
+from datetime import datetime
+from os.path import basename, dirname, join
 nblock=14
 ofile = './data/new.nc'
 
-def creatNetCDF(fname, block_mids):
+def creatNetCDF(info):
     """ Create nc4 file for writing CMV data.
 
     Parameters
     ----------
     fname : String
         File name.
-    block : Numpy array
-        Cordinate of the mid points of the blocks where CMVs are computed.
+    info : python dictinary
+        Information of the blocks and video where CMVs are computed.
 
     Returns
     -------
     None.
 
     """
-    ncfile = Dataset(fname, mode='w',format='NETCDF4_CLASSIC') 
-    nblock = block_mids.size
+    #make output netCDF file
+    ofile = join(dirname(info['input']),"CMV_"+basename(info['input']).replace(".mpg", ".nc"))
+    ncfile = Dataset(ofile, mode='w',format='NETCDF4_CLASSIC') 
     
-    x_dim = ncfile.createDimension('x', nblock)     
-    y_dim = ncfile.createDimension('y', nblock)
+    x_dim = ncfile.createDimension('x', info['nblock'])     
+    y_dim = ncfile.createDimension('y', info['nblock'])
     t_dim = ncfile.createDimension('time', None) # unlimited time axis 
-    ncfile.title='CMV data'
-    ncfile.subtitle="CMVs computed using phase correlation method in hemispheric camera images."
     
+    #Create variables
     x = ncfile.createVariable('x', np.int32, ('x',))
     x.units = 'pixels'
     x.long_name = 'x'
@@ -56,12 +57,34 @@ def creatNetCDF(fname, block_mids):
     v.units = 'pixels'
     v.long_name = 'v component'
     
-    x[:] = block_mids
-    y[:] = block_mids
+    x[:] = info['block_mid']
+    y[:] = info['block_mid']
+    
+
+    global_attributes(ncfile, info)
     
     ncfile.close()
-    return
+    
+    return ofile
 
+
+
+def global_attributes(ncfile, info):
+    creation_time=datetime.now()
+    dt_string = creation_time.strftime("%b %d, %Y %H:%M:%S")
+    ncfile.description = "CMVs computed for the hemispheric camera images"
+    ncfile.created = dt_string
+    ncfile.input_video=info['input']
+    ncfile.original_width = info['frame_width']
+    ncfile.original_height = info['frame_height']
+    ncfile.crop_x1 = info['x1']
+    ncfile.crop_x2 = info['x2']
+    ncfile.crop_y1 = info['y1']
+    ncfile.crop_y2 = info['y2']
+    ncfile.nblock = info['nblock']
+    ncfile.block_len = info['block_len']
+    ncfile.fskip = info['fskip']
+    return
 
 
 def writeCMVtoNC(nc_name, u, v, frame2_num, tcount):
