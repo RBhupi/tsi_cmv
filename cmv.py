@@ -11,16 +11,17 @@ import cv2 as cv
 
 #from matplotlib import pyplot as plt
 import sys
-from os.path import basename, dirname, join
+
 
 from videoRead import openVideoFile, videoCropInfo, readVideoFrame
 from cmvUtils import flowVectorSplit
 from outNC import creatNetCDF, writeCMVtoNC
 
+
 parser = argparse.ArgumentParser(description='''This program uses phase correlation method from the TINT module
                                               to compute the cloud motion vectors in the hemispheric camera video''')
 parser.add_argument('--input', type=str, help='Path to an input video or images.', default="./data/sgptsimovieS01.a1.20160726.000000.mpg")
-parser.add_argument('--fskip', type=str, help='Background subtraction method (KNN, MOG2).', default=2)
+parser.add_argument('--fskip', type=str, help='Skip frames for better motion detection.', default=2)
 
 args = parser.parse_args()
 
@@ -31,21 +32,23 @@ nblock = 14
 block_len = 32
 
 
-print('Opening:', args.input)
 
+
+print('Opening:', args.input)
 video_cap = openVideoFile(args.input)
 
 #get video frame and cropping info in a dictinary
 inf = videoCropInfo(video_cap, nblock, block_len)
+inf['fskip']=args.fskip
+inf['input']=args.input
 
 # showing video properties
 print("Original Frame width '{}'".format(inf['frame_width']))
 print("Original Frame Height : '{}'".format(inf['frame_height']))
 print("Using cropped region: ", inf['x1'],":", inf['x2'], ",", inf['y1'], ":", inf['y2'])
 
-#make output netCDF file
-ofile = join(dirname(args.input),"CMV_"+basename(args.input).replace(".mpg", ".nc"))
-creatNetCDF(ofile, inf['block_mid'])
+
+ofile_name=creatNetCDF(inf)
 
 
 fcount = 0
@@ -64,7 +67,7 @@ while video_cap.isOpened():
         sys.stdout.write('Current Frame:' + str(fcount)+ '\r')
         sys.stdout.flush()
         
-        sky_new = frame[inf['x1']:inf['x2'], inf['y1']:inf['y2'], chan] #too specific
+        sky_new = frame[inf['x1']:inf['x2'], inf['y1']:inf['y2'], chan]
       
         #Store the sky data for first the frame as .
         if first_frame:
@@ -85,9 +88,10 @@ while video_cap.isOpened():
 
         cmv_x, cmv_y = flowVectorSplit(sky_prev, sky_curr, nblock)
         
-        writeCMVtoNC(ofile, cmv_x, cmv_y, fcount, tcount)
+        writeCMVtoNC(ofile_name, cmv_x, cmv_y, fcount, tcount)
         #increment the tcount after writing is done.
         tcount +=1
+        exit()
 
 
         

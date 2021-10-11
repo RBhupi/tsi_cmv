@@ -54,7 +54,8 @@ def videoCropInfo(video_cap, nblock, block_len):
     #compute approximate central points of each block
     mid_loc = np.arange((block_len/2)-1, nblock*block_len, block_len)
     return dict(frame_width=frame_width, frame_height=frame_height, 
-                x1=x1, x2=x2, y1=y1, y2=y2, block_mid=mid_loc)
+                x1=x1, x2=x2, y1=y1, y2=y2, block_mid=mid_loc, nblock=nblock,
+                block_len=block_len)
 
 
 
