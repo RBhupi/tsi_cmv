@@ -11,7 +11,7 @@ import cv2 as cv
 
 #from matplotlib import pyplot as plt
 import sys
-
+import os
 
 from videoRead import openVideoFile, videoCropInfo, readVideoFrame
 from cmvUtils import flowVectorSplit
@@ -21,7 +21,7 @@ from outNC import creatNetCDF, writeCMVtoNC
 parser = argparse.ArgumentParser(description='''This program uses phase correlation method from the TINT module
                                               to compute the cloud motion vectors in the hemispheric camera video''')
 parser.add_argument('--input', type=str, help='Path to an input video or images.', default="./data/sgptsimovieS01.a1.20160726.000000.mpg")
-parser.add_argument('--fskip', type=str, help='Skip frames for better motion detection.', default=2)
+parser.add_argument('--fleap', type=str, help='Skip frames for better motion detection.', default=2)
 
 args = parser.parse_args()
 
@@ -39,8 +39,9 @@ video_cap = openVideoFile(args.input)
 
 #get video frame and cropping info in a dictinary
 inf = videoCropInfo(video_cap, nblock, block_len)
-inf['fskip']=args.fskip
+inf['fleap']=args.fleap
 inf['input']=args.input
+inf['channel']=chan
 
 # showing video properties
 print("Original Frame width '{}'".format(inf['frame_width']))
@@ -63,7 +64,7 @@ while video_cap.isOpened():
     
 
     # We skip given number of frames to compute the flow
-    if fcount==1 or fcount % args.fskip == 0:
+    if fcount==1 or fcount % args.fleap == 0:
         sys.stdout.write('Current Frame:' + str(fcount)+ '\r')
         sys.stdout.flush()
         
@@ -91,7 +92,6 @@ while video_cap.isOpened():
         writeCMVtoNC(ofile_name, cmv_x, cmv_y, fcount, tcount)
         #increment the tcount after writing is done.
         tcount +=1
-        exit()
 
 
         

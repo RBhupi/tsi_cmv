@@ -34,7 +34,7 @@ def creatNetCDF(info):
     
     x_dim = ncfile.createDimension('x', info['nblock'])     
     y_dim = ncfile.createDimension('y', info['nblock'])
-    t_dim = ncfile.createDimension('time', None) # unlimited time axis 
+    t_dim = ncfile.createDimension('index', None) # unlimited time axis 
     
     #Create variables
     x = ncfile.createVariable('x', np.int32, ('x',))
@@ -45,15 +45,15 @@ def creatNetCDF(info):
     y.units = 'pixels'
     y.long_name = 'y'
     
-    time = ncfile.createVariable('time', np.int32, ('time',))
-    time.units = 'frame2 number'
-    time.long_name = 'time steps'
+    index = ncfile.createVariable('index', np.int32, ('index',))
+    index.units = 'number'
+    index.long_name = 'frame2 index as time steps'
     
-    u = ncfile.createVariable('u', np.float32, ('time','x','y'), zlib=True, complevel=9)
+    u = ncfile.createVariable('u', np.float32, ('index','x','y'), zlib=True, complevel=9)
     u.units = 'pixels'
     u.long_name = 'u component'
     
-    v = ncfile.createVariable('v', np.float32, ('time','x','y'), zlib=True, complevel=9)
+    v = ncfile.createVariable('v', np.float32, ('index','x','y'), zlib=True, complevel=9)
     v.units = 'pixels'
     v.long_name = 'v component'
     
@@ -75,6 +75,7 @@ def global_attributes(ncfile, info):
     ncfile.description = "CMVs computed for the hemispheric camera images"
     ncfile.created = dt_string
     ncfile.input_video=info['input']
+    ncfile.BGR_chan=info['channel']
     ncfile.original_width = info['frame_width']
     ncfile.original_height = info['frame_height']
     ncfile.crop_x1 = info['x1']
@@ -83,7 +84,7 @@ def global_attributes(ncfile, info):
     ncfile.crop_y2 = info['y2']
     ncfile.nblock = info['nblock']
     ncfile.block_len = info['block_len']
-    ncfile.fskip = info['fskip']
+    ncfile.fleap = info['fleap']
     return
 
 
@@ -110,7 +111,7 @@ def writeCMVtoNC(nc_name, u, v, frame2_num, tcount):
 
     """
     ncfile = Dataset(nc_name, mode="a")
-    ncfile['time'][tcount] = frame2_num
+    ncfile['index'][tcount] = frame2_num-1
     ncfile['u'][tcount, :, :] = u
     ncfile['v'][tcount, :, :] = v
     ncfile.close()
