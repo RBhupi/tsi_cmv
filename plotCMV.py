@@ -59,12 +59,15 @@ for i in range(0, nframes_video-1):
     
 
     
-    u = ncfile['u'][tcount, :, :]
-    v = ncfile['v'][tcount, :, :]
+    #u = ncfile['u'][tcount, :, :]
+    #v = ncfile['v'][tcount, :, :]
+    
+    u_mean = ncfile['u_mean'][tcount]
+    v_mean = ncfile['v_mean'][tcount]
     tcount+=1
     
-    u_mean = u[(np.abs(u)>0) | (np.abs(v)>0)].mean()
-    v_mean = v[(np.abs(u)>0) | (np.abs(v)>0)].mean()
+    #u_mean = u[(np.abs(u)>0) | (np.abs(v)>0)].mean()
+    #v_mean = v[(np.abs(u)>0) | (np.abs(v)>0)].mean()
     
     plt.imshow(sky)
     plt.quiver(224, 224, u_mean, v_mean, scale=5, color="b")

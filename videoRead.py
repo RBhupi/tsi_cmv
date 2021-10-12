@@ -8,7 +8,6 @@ Created on Fri Oct  8 13:06:48 2021
 
 
 import numpy as np
-from scipy import ndimage
 import cv2 as cv
 from sys import exit
 

@@ -26,7 +26,12 @@ def creatNetCDF(info):
     Returns
     -------
     None.
-
+    
+    @toDo Total number of frames in the video are not reading correctly by 
+    the openCV capture (shows 20), possibly compression chunk size equals 20. 
+    Hence, I can not estimate values of the index dimention, which is now 
+    written at every step in one of the data writting fucntions. 
+    This can be later moved to the file creation function.
     """
     #make output netCDF file
     ofile = join(dirname(info['input']),"CMV_"+basename(info['input']).replace(".mpg", ".nc"))
@@ -34,7 +39,7 @@ def creatNetCDF(info):
     
     x_dim = ncfile.createDimension('x', info['nblock'])     
     y_dim = ncfile.createDimension('y', info['nblock'])
-    t_dim = ncfile.createDimension('index', None) # unlimited time axis 
+    t_dim = ncfile.createDimension('index', None)
     
     #Create variables
     x = ncfile.createVariable('x', np.int32, ('x',))
@@ -119,6 +124,7 @@ def writeCMVtoNC(nc_name, u, v, frame2_num, tcount):
 
     """
     ncfile = Dataset(nc_name, mode="a")
+    #One of the writing functions must have following statement, 
     ncfile['index'][tcount] = frame2_num-1
     ncfile['u'][tcount, :, :] = u
     ncfile['v'][tcount, :, :] = v
@@ -147,7 +153,10 @@ def writeMeanCMVtoNC(nc_name, u_mean, v_mean, frame2_num, tcount):
 
     """
     ncfile = Dataset(nc_name, mode="a")
+    
+    #One of the writing functions must have following statement, 
     #ncfile['index'][tcount] = frame2_num-1
+    
     ncfile['u_mean'][tcount] = u_mean
     ncfile['v_mean'][tcount] = v_mean
     ncfile.close()

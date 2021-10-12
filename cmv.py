@@ -7,11 +7,7 @@ Created on Mon Oct 4 10:03:50 2021
 """
 
 import argparse
-import cv2 as cv
-
-#from matplotlib import pyplot as plt
 import sys
-import os
 
 from videoRead import openVideoFile, videoCropInfo, readVideoFrame
 from cmvUtils import flowVectorSplit, meanCMV
@@ -35,7 +31,7 @@ block_len = 32
 print('Opening:', args.input)
 video_cap = openVideoFile(args.input)
 
-#get video frame and cropping info in a dictinary
+#get video frame and cropping info in a dictionary
 inf = videoCropInfo(video_cap, nblock, block_len)
 inf['fleap']=args.fleap
 inf['input']=args.input
@@ -54,14 +50,12 @@ fcount = 0
 first_frame = True
 tcount = 0
 
-#plt.ion()
-#flow_plot= plt.figure()
 
 while video_cap.isOpened():
     fcount, frame = readVideoFrame(fcount, video_cap)
     
 
-    # We skip given number of frames to compute the flow
+    # We leap forward given number of frames to compute the flow
     if fcount==1 or fcount % args.fleap == 0:
         sys.stdout.write('Current Frame:' + str(fcount)+ '\r')
         sys.stdout.flush()
@@ -71,19 +65,12 @@ while video_cap.isOpened():
         #Store the sky data for first the frame as .
         if first_frame:
             sky_curr = sky_new
-            sky_for_plot1 = frame[inf['y1']:inf['y2'], inf['x1']:inf['x2'], :]
             first_frame = False
             continue
 
         #move one frame forward
         sky_prev = sky_curr
         sky_curr = sky_new
-        
-        #I want to plot the frame1 with the arrow showing motion to next frame.
-        sky_for_plot = sky_for_plot1
-        sky_for_plot = cv.cvtColor(sky_for_plot, cv.COLOR_BGR2RGB)
-        sky_for_plot1 = frame[inf['y1']:inf['y2'], inf['x1']:inf['x2'], :]
-    
 
         cmv_x, cmv_y = flowVectorSplit(sky_prev, sky_curr, nblock)
         u_mean,  v_mean = meanCMV(cmv_x, cmv_y)
@@ -95,18 +82,6 @@ while video_cap.isOpened():
         tcount +=1
 
 
-        
-        #plt.imshow(sky_for_plot)
-        #plt.quiver(arrow_loc, arrow_loc, cmv_y, -cmv_x, scale=30)
-        
-        #fig_path = "./plots/image"+f'{fcount:05d}'+".png"
-        #plt.savefig(fig_path)
-        #plt.pause(0.3)
-        #plt.close()
-
-
-#plt.show()
-#plt.ioff()
 
         
         
