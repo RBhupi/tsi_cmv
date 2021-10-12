@@ -103,7 +103,7 @@ def writeCMVtoNC(nc_name, u, v, frame2_num, tcount):
     frame2_num : Integer
         Frame number of the second frame used in computing CMV.
     tcount : Integer
-        Time index for writing in the netCDF file.
+        Frame index to be written in the netCDF file.
 
     Returns
     -------

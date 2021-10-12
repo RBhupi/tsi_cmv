@@ -38,26 +38,22 @@ def flowVectorSplit(array1, array2, nblock):
     cmv_x = np.zeros(nblock*nblock)
     cmv_y = np.zeros(nblock*nblock)
     for i in range(nblock*nblock):
-        cmv_x[i], cmv_y[i] = fftFlowVector(array1_split[i], array2_split[i])
+        cmv_y[i], cmv_x[i] = fftFlowVector(array1_split[i], array2_split[i])
     
     cmv_x, cmv_y = rmLargeValues(cmv_x, cmv_y)
     
     cmv_x = cmv_x.reshape([nblock, nblock])
     cmv_y = cmv_y.reshape([nblock, nblock])
     
-    cmv_x, cmv_y = correctOrientationAndOrderOfCMVsDueToUnknownIssue(cmv_x, cmv_y)
+    cmv_x, cmv_y = flipVectors(cmv_x, cmv_y)
     
     return cmv_x, cmv_y
 
 
 
-def correctOrientationAndOrderOfCMVsDueToUnknownIssue(cmv_x, cmv_y):
-    """ ????? I don't know why x and y are swapped????????
-    So I am correcting their order in this fuction. If someone can get to 
-    the root of this, then this weirdly named function can be removed.
-    """
-    cmv_x_correct = np.flip(cmv_y, axis=0)
-    cmv_y_correct = np.flip(-cmv_x, axis=0)
+def flipVectors(cmv_x, cmv_y):
+    cmv_x_correct = np.flip(cmv_x, axis=0)
+    cmv_y_correct = np.flip(-cmv_y, axis=0)
     
     return cmv_x_correct, cmv_y_correct
 
@@ -85,6 +81,7 @@ def rmLargeValues(cmv_x, cmv_y, std_fact=1):
     
     vmag, vdir = vectorMagnitudeDirection(cmv_x, cmv_y)
     vmag_std = vmag[vmag>0].std()
+    
     
     for i in range(0, cmv_x.size):
             if vmag[i]> vmag_std*std_fact:
@@ -116,10 +113,9 @@ def vectorMagnitudeDirection(cmv_x, cmv_y, std_fact=1):
 
     """
     vec_mag = np.sqrt(cmv_x*cmv_x + cmv_y*cmv_y)
+    vec_dir = np.rad2deg(np.arctan2(cmv_y,cmv_x))%360
     
-    #confirm this statement, we are not using this at this time
-    #vec_dir = (270-np.rad2deg(np.arctan2(cmv_x,cmv_y)))%360 
-    return vec_mag, np.NAN #vec_dir
+    return vec_mag, vec_dir
 
 
 def fftFlowVector(im1, im2, global_shift=True):

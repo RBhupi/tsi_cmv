@@ -26,12 +26,10 @@ parser.add_argument('--fleap', type=str, help='Skip frames for better motion det
 args = parser.parse_args()
 
 # Can not use all the RGB channels, so select one
-chan = 2 #0-2
+chan = 2 #0,1,2 BGR in OpenCV
 #The sky view will be divided into the square blocks of block size, say 32x32 pixels
 nblock = 14
 block_len = 32
-
-
 
 
 print('Opening:', args.input)
@@ -68,12 +66,12 @@ while video_cap.isOpened():
         sys.stdout.write('Current Frame:' + str(fcount)+ '\r')
         sys.stdout.flush()
         
-        sky_new = frame[inf['x1']:inf['x2'], inf['y1']:inf['y2'], chan]
+        sky_new = frame[inf['y1']:inf['y2'], inf['x1']:inf['x2'], chan]
       
         #Store the sky data for first the frame as .
         if first_frame:
             sky_curr = sky_new
-            sky_for_plot1 = frame[inf['x1']:inf['x2'], inf['y1']:inf['y2'], :]
+            sky_for_plot1 = frame[inf['y1']:inf['y2'], inf['x1']:inf['x2'], :]
             first_frame = False
             continue
 
@@ -84,7 +82,7 @@ while video_cap.isOpened():
         #I want to plot the frame1 with the arrow showing motion to next frame.
         sky_for_plot = sky_for_plot1
         sky_for_plot = cv.cvtColor(sky_for_plot, cv.COLOR_BGR2RGB)
-        sky_for_plot1 = frame[inf['x1']:inf['x2'], inf['y1']:inf['y2'], :]
+        sky_for_plot1 = frame[inf['y1']:inf['y2'], inf['x1']:inf['x2'], :]
     
 
         cmv_x, cmv_y = flowVectorSplit(sky_prev, sky_curr, nblock)

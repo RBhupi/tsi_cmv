@@ -53,7 +53,7 @@ for i in range(0, nframes_video-1):
     if fcount==1 or fcount % fleap == 0:
         sys.stdout.write('Current Frame:' + str(fcount)+ '\r')
         sys.stdout.flush()
-        sky = frame[inf['x1']:inf['x2'], inf['y1']:inf['y2'], :]
+        sky = frame[inf['y1']:inf['y2'], inf['x1']:inf['x2'], :]
     else:
         continue
     

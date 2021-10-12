@@ -46,10 +46,10 @@ def videoCropInfo(video_cap, nblock, block_len):
              the provided crop-dimensions.")
     
     #crop a square region of interest to accomodate 
-    x1 = int((frame_height/2)-(nblock/2*block_len))
-    x2 = int((frame_height/2)+(nblock/2*block_len))
-    y1 = int((frame_width/2)-(nblock/2*block_len))
-    y2 = int((frame_width/2)+(nblock/2*block_len))
+    y1 = int((frame_height/2)-(nblock/2*block_len))
+    y2 = int((frame_height/2)+(nblock/2*block_len))
+    x1 = int((frame_width/2)-(nblock/2*block_len))
+    x2 = int((frame_width/2)+(nblock/2*block_len))
     
     #compute approximate central points of each block
     mid_loc = np.arange((block_len/2)-1, nblock*block_len, block_len)
