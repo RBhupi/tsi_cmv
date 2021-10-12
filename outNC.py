@@ -57,6 +57,14 @@ def creatNetCDF(info):
     v.units = 'pixels'
     v.long_name = 'v component'
     
+    u_mean = ncfile.createVariable('u_mean', np.float32, ('index'), zlib=True, complevel=9)
+    u_mean.units = 'pixels'
+    u_mean.long_name = 'mean u over the domain'
+    
+    v_mean = ncfile.createVariable('v_mean', np.float32, ('index'), zlib=True, complevel=9)
+    v_mean.units = 'pixels'
+    v_mean.long_name = 'mean v over the domain'
+    
     x[:] = info['block_mid']
     y[:] = info['block_mid']
     
@@ -116,6 +124,35 @@ def writeCMVtoNC(nc_name, u, v, frame2_num, tcount):
     ncfile['v'][tcount, :, :] = v
     ncfile.close()
     return 
+
+def writeMeanCMVtoNC(nc_name, u_mean, v_mean, frame2_num, tcount):
+    """
+    
+    Parameters
+    ----------
+    nc_name : String
+        NetCDF file to append the data.
+    u_mean : Numpy array
+
+    v_mean : Numpy array
+
+    frame2_num : Integer
+        Frame number of the second frame used in computing CMV.
+    tcount : Integer
+        Frame index to be written in the netCDF file.
+
+    Returns
+    -------
+    None.
+
+    """
+    ncfile = Dataset(nc_name, mode="a")
+    #ncfile['index'][tcount] = frame2_num-1
+    ncfile['u_mean'][tcount] = u_mean
+    ncfile['v_mean'][tcount] = v_mean
+    ncfile.close()
+    return 
+
 
 
 

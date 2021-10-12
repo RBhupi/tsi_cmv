@@ -14,8 +14,8 @@ import sys
 import os
 
 from videoRead import openVideoFile, videoCropInfo, readVideoFrame
-from cmvUtils import flowVectorSplit
-from outNC import creatNetCDF, writeCMVtoNC
+from cmvUtils import flowVectorSplit, meanCMV
+from outNC import creatNetCDF, writeCMVtoNC, writeMeanCMVtoNC
 
 
 parser = argparse.ArgumentParser(description='''This program uses phase correlation method from the TINT module
@@ -86,8 +86,11 @@ while video_cap.isOpened():
     
 
         cmv_x, cmv_y = flowVectorSplit(sky_prev, sky_curr, nblock)
+        u_mean,  v_mean = meanCMV(cmv_x, cmv_y)
+
         
         writeCMVtoNC(ofile_name, cmv_x, cmv_y, fcount, tcount)
+        writeMeanCMVtoNC(ofile_name, u_mean, v_mean, fcount, tcount)
         #increment the tcount after writing is done.
         tcount +=1
 

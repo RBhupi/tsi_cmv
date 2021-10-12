@@ -183,3 +183,8 @@ def split2DArray(arr2d, nblock):
     return split_arr
 
 
+
+def meanCMV(u, v):
+    u_mean = u[(np.abs(u)>0) | (np.abs(v)>0)].mean()
+    v_mean = v[(np.abs(u)>0) | (np.abs(v)>0)].mean()
+    return u_mean, v_mean
