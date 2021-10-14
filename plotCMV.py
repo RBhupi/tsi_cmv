@@ -8,10 +8,13 @@ Created on Thu Oct  7 17:12:16 2021
 
 import argparse
 import sys
+
+import numpy as np
 from matplotlib import pyplot as plt
 from netCDF4 import Dataset
+
 from videoRead import openVideoFile, readVideoFrame, videoCropInfo
-import numpy as np
+
 
 
 parser = argparse.ArgumentParser(description='''This program cloud motion vectors and cloud images 
@@ -71,10 +74,11 @@ for i in range(0, nframes_video-1):
     
     plt.imshow(sky)
     plt.quiver(224, 224, u_mean, v_mean, scale=5, color="b")
-    
+    fig_path = "./plots/image"+f'{tcount:05d}'+".jpg"
+    plt.savefig(fig_path)
     plt.pause(0.3)
     plt.close()
-
+    
 
 plt.show()
 plt.ioff()

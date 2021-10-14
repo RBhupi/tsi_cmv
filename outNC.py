@@ -6,11 +6,16 @@ Created on Wed Oct  6 17:17:43 2021
 @author: Bhupendra Raut
 """
 
-from netCDF4 import Dataset  
-import numpy as np
+
+
 from datetime import datetime
 from os.path import basename, dirname, join
-nblock=14
+
+import numpy as np
+from netCDF4 import Dataset
+
+
+nblock = 14
 ofile = './data/new.nc'
 
 def creatNetCDF(info):
@@ -34,7 +39,9 @@ def creatNetCDF(info):
     This can be later moved to the file creation function.
     """
     #make output netCDF file
-    ofile = join(dirname(info['input']),"CMV_"+basename(info['input']).replace(".mpg", ".nc"))
+    dir_name = dirname(info['input'])
+    ofile_name ="CMV_" + basename(info['input']).replace(".mpg", ".nc")
+    ofile = join(dir_name, ofile_name)
     ncfile = Dataset(ofile, mode='w',format='NETCDF4_CLASSIC') 
     
     x_dim = ncfile.createDimension('x', info['nblock'])     
@@ -44,37 +51,41 @@ def creatNetCDF(info):
     #Create variables
     x = ncfile.createVariable('x', np.int32, ('x',))
     x.units = 'pixels'
-    x.long_name = 'x'
+    x.long_name = 'block-center along x-axis'
     
     y = ncfile.createVariable('y', np.int32, ('y',))
     y.units = 'pixels'
-    y.long_name = 'y'
+    y.long_name = 'block-center along y-axis'
     
     index = ncfile.createVariable('index', np.int32, ('index',))
-    index.units = 'number'
-    index.long_name = 'frame2 index as time steps'
+    index.units = 'time-step'
+    index.long_name = 'frame2 indices'
     
-    u = ncfile.createVariable('u', np.float32, ('index','x','y'), zlib=True, complevel=9)
-    u.units = 'pixels'
+    u = ncfile.createVariable('u', np.float32, ('index','x','y'), 
+                              zlib=True, complevel=9)
+    u.units = 'pixel/time-steps'
     u.long_name = 'u component'
     
-    v = ncfile.createVariable('v', np.float32, ('index','x','y'), zlib=True, complevel=9)
-    v.units = 'pixels'
+    v = ncfile.createVariable('v', np.float32, ('index','x','y'), 
+                              zlib=True, complevel=9)
+    v.units = 'pixel/time-steps'
     v.long_name = 'v component'
     
-    u_mean = ncfile.createVariable('u_mean', np.float32, ('index'), zlib=True, complevel=9)
-    u_mean.units = 'pixels'
+    u_mean = ncfile.createVariable('u_mean', np.float32, ('index'), 
+                                   zlib=True, complevel=9)
+    u_mean.units = 'pixel/time-steps'
     u_mean.long_name = 'mean u over the domain'
     
-    v_mean = ncfile.createVariable('v_mean', np.float32, ('index'), zlib=True, complevel=9)
-    v_mean.units = 'pixels'
+    v_mean = ncfile.createVariable('v_mean', np.float32, ('index'), 
+                                   zlib=True, complevel=9)
+    v_mean.units = 'pixel/time-steps'
     v_mean.long_name = 'mean v over the domain'
     
     x[:] = info['block_mid']
     y[:] = info['block_mid']
     
 
-    global_attributes(ncfile, info)
+    writeGlobalAttributes(ncfile, info)
     
     ncfile.close()
     
@@ -82,10 +93,10 @@ def creatNetCDF(info):
 
 
 
-def global_attributes(ncfile, info):
+def writeGlobalAttributes(ncfile, info):
     creation_time=datetime.now()
     dt_string = creation_time.strftime("%b %d, %Y %H:%M:%S")
-    ncfile.description = "CMVs computed for the hemispheric camera images"
+    ncfile.description = "CMVs computed over a suqare grid in the hemispheric camera images"
     ncfile.created = dt_string
     ncfile.input_video=info['input']
     ncfile.BGR_chan=info['channel']
@@ -103,8 +114,6 @@ def global_attributes(ncfile, info):
 
 def writeCMVtoNC(nc_name, u, v, frame2_num, tcount):
     """
-    
-
     Parameters
     ----------
     nc_name : String

@@ -29,7 +29,8 @@ def flowVectorSplit(array1, array2, nblock):
     cmv_x : u component of CMV.
     cmv_y : v component of CMV.
     
-    @ToDo: nblocks should be provided for both x and y direction to accomodate non-squared area, if needed.
+    @ToDo: nblocks should be provided for both x and y direction to accomodate
+    non-squared area, if needed.
     
     """
     array1_split = split2DArray(array1, nblock)
@@ -84,9 +85,9 @@ def rmLargeValues(cmv_x, cmv_y, std_fact=1):
     
     
     for i in range(0, cmv_x.size):
-            if vmag[i]> vmag_std*std_fact:
-                cmv_x[i]=0
-                cmv_y[i]=0
+            if vmag[i] > vmag_std * std_fact:
+                cmv_x[i] = 0
+                cmv_y[i] = 0
     
     return cmv_x, cmv_y
 
@@ -113,7 +114,7 @@ def vectorMagnitudeDirection(cmv_x, cmv_y, std_fact=1):
 
     """
     vec_mag = np.sqrt(cmv_x*cmv_x + cmv_y*cmv_y)
-    vec_dir = np.rad2deg(np.arctan2(cmv_y,cmv_x))%360
+    vec_dir = np.rad2deg(np.arctan2(cmv_y,cmv_x)) % 360
     
     return vec_mag, vec_dir
 
@@ -141,9 +142,9 @@ def fftCrossCov(im1, im2):
     """ Computes cross correlation matrix using FFT method. """
     fft1_conj = np.conj(np.fft.fft2(im1))
     fft2 = np.fft.fft2(im2)
-    normalize = abs(fft2*fft1_conj)
+    normalize = abs(fft2 * fft1_conj)
     normalize[normalize == 0] = 1  # prevent divide by zero error
-    cross_power_spectrum = (fft2*fft1_conj)/normalize
+    cross_power_spectrum = (fft2 * fft1_conj)/normalize
     crosscov = np.fft.ifft2(cross_power_spectrum)
     crosscov = np.real(crosscov)
     return motionVector(crosscov)
@@ -173,7 +174,8 @@ def motionVector(fft_mat):
 
 
 def split2DArray(arr2d, nblock):
-    """ Splits sky into given number of blocks. Not tested for uneven shapes or nonfitting arrays """
+    """ Splits sky into given number of blocks. 
+    Not tested for uneven shapes or nonfitting arrays """
     split_0 = np.array_split(arr2d, nblock, axis=0)
     split_arr=[]
     for arr in split_0:
@@ -185,6 +187,6 @@ def split2DArray(arr2d, nblock):
 
 
 def meanCMV(u, v):
-    u_mean = u[(np.abs(u)>0) | (np.abs(v)>0)].mean()
-    v_mean = v[(np.abs(u)>0) | (np.abs(v)>0)].mean()
+    u_mean = u[(np.abs(u) > 0) | (np.abs(v) > 0)].mean()
+    v_mean = v[(np.abs(u) > 0) | (np.abs(v) > 0)].mean()
     return u_mean, v_mean

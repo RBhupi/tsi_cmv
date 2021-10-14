@@ -14,10 +14,16 @@ from cmvUtils import flowVectorSplit, meanCMV
 from outNC import creatNetCDF, writeCMVtoNC, writeMeanCMVtoNC
 
 
-parser = argparse.ArgumentParser(description='''This program uses phase correlation method from the TINT module
-                                              to compute the cloud motion vectors in the hemispheric camera video''')
-parser.add_argument('--input', type=str, help='Path to an input video or images.', default="./data/sgptsimovieS01.a1.20160726.000000.mpg")
-parser.add_argument('--fleap', type=str, help='Skip frames for better motion detection.', default=2)
+parser = argparse.ArgumentParser(description='''
+                                 This program uses phase correlation method 
+                                 from the TINT module to compute the cloud 
+                                 motion vectors in the hemispheric camera''')
+parser.add_argument('--input', type=str, 
+                    help='Path to an input video or images.', 
+                    default="./data/sgptsimovieS01.a1.20160726.000000.mpg")
+
+parser.add_argument('--fleap', type=str, 
+                    help='Skip frames for better motion detection.', default=2)
 
 args = parser.parse_args()
 
@@ -33,14 +39,15 @@ video_cap = openVideoFile(args.input)
 
 #get video frame and cropping info in a dictionary
 inf = videoCropInfo(video_cap, nblock, block_len)
-inf['fleap']=args.fleap
-inf['input']=args.input
-inf['channel']=chan
+inf['fleap'] = args.fleap
+inf['input'] = args.input
+inf['channel'] = chan
 
 # showing video properties
 print("Original Frame width '{}'".format(inf['frame_width']))
 print("Original Frame Height : '{}'".format(inf['frame_height']))
-print("Using cropped region: ", inf['x1'],":", inf['x2'], ",", inf['y1'], ":", inf['y2'])
+print("Using cropped region: ", inf['x1'],":", inf['x2'], ",", 
+      inf['y1'], ":", inf['y2'])
 
 
 ofile_name=creatNetCDF(inf)
@@ -56,7 +63,7 @@ while video_cap.isOpened():
     
 
     # We leap forward given number of frames to compute the flow
-    if fcount==1 or fcount % args.fleap == 0:
+    if fcount == 1 or fcount % args.fleap == 0:
         sys.stdout.write('Current Frame:' + str(fcount)+ '\r')
         sys.stdout.flush()
         
@@ -79,7 +86,7 @@ while video_cap.isOpened():
         writeCMVtoNC(ofile_name, cmv_x, cmv_y, fcount, tcount)
         writeMeanCMVtoNC(ofile_name, u_mean, v_mean, fcount, tcount)
         #increment the tcount after writing is done.
-        tcount +=1
+        tcount += 1
 
 
 
