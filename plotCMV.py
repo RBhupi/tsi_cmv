@@ -14,7 +14,7 @@ from matplotlib import pyplot as plt
 from netCDF4 import Dataset
 
 from videoRead import openVideoFile, readVideoFrame, videoCropInfo
-
+import cv2 as cv
 
 
 parser = argparse.ArgumentParser(description='''This program cloud motion vectors and cloud images 
@@ -22,7 +22,7 @@ parser = argparse.ArgumentParser(description='''This program cloud motion vector
 #parser.add_argument('--video', type=str, help='Path to an input video or images.', 
 #                    default="./data/sgptsimovieS01.a1.20160726.000000.mpg")
 parser.add_argument('--cmv', type=str, help='CMV data file.', 
-                    default="./data/CMV_sgptsimovieS01.a1.20160726.000000.nc")
+                    default="./data/sgptsimovieS01.a1.20160726.000000_i")
 
 args = parser.parse_args()
 
@@ -48,7 +48,7 @@ inf = videoCropInfo(video_cap, nblock, block_len)
 fcount = 0
 tcount = 0
 plt.ion()
-flow_plot= plt.figure()
+fig, axs = plt.subplots(3, 3)
 for i in range(0, nframes_video-1):
     fcount, frame = readVideoFrame(fcount, video_cap)
     
@@ -57,6 +57,7 @@ for i in range(0, nframes_video-1):
         sys.stdout.write('Current Frame:' + str(fcount)+ '\r')
         sys.stdout.flush()
         sky = frame[inf['y1']:inf['y2'], inf['x1']:inf['x2'], :]
+        sky = cv.cvtColor(sky, cv.COLOR_BGR2RGB)
     else:
         continue
     
@@ -67,16 +68,26 @@ for i in range(0, nframes_video-1):
     
     u_mean = ncfile['u_mean'][tcount]
     v_mean = ncfile['v_mean'][tcount]
+    
+    u_global = ncfile['u_global'][tcount]
+    v_global = ncfile['v_global'][tcount]
+    
+    u = ncfile['u'][tcount]
+    v = ncfile['v'][tcount]
+    
     tcount+=1
     
     #u_mean = u[(np.abs(u)>0) | (np.abs(v)>0)].mean()
     #v_mean = v[(np.abs(u)>0) | (np.abs(v)>0)].mean()
     
-    plt.imshow(sky)
-    plt.quiver(224, 224, u_mean, v_mean, scale=5, color="b")
+    
+    axs[0, 0].imshow(sky)
+    axs[0, 0].quiver(200, 200, u_mean, v_mean, scale=10, color="r")
+    #plt.quiver(185, 185, u_global, v_global, scale=10, color="b")
+    #plt.quiver(x, y, u, v, scale=50, color='dimgrey', width=0.005)
     fig_path = "./plots/image"+f'{tcount:05d}'+".jpg"
     plt.savefig(fig_path)
-    plt.pause(0.3)
+    plt.pause(0.5)
     plt.close()
     
 
