@@ -10,8 +10,9 @@ Parts of this module are adopted from TINT module phase_correlation.py
 import numpy as np
 from scipy import ndimage
 
+import matplotlib.pyplot as plt #for debugging
 
-def flowVectorSplit(array1, array2, nblock):
+def flowVectorSplit(array1, array2, info):
     """
     Splits camera view into a grid, and computes flow vectors for each block.
 
@@ -33,6 +34,9 @@ def flowVectorSplit(array1, array2, nblock):
     non-squared area, if needed.
     
     """
+    nblock = info['nblock']
+    #global_cmv_x, global_cmv_y = fftFlowVector(array1, array2)
+    
     array1_split = split2DArray(array1, nblock)
     array2_split = split2DArray(array2, nblock)
     
@@ -40,15 +44,18 @@ def flowVectorSplit(array1, array2, nblock):
     cmv_y = np.zeros(nblock*nblock)
     for i in range(nblock*nblock):
         cmv_y[i], cmv_x[i] = fftFlowVector(array1_split[i], array2_split[i])
-    
-    cmv_x, cmv_y = rmLargeValues(cmv_x, cmv_y)
+        
+    cmv_x, cmv_y = rmLargeMagnitudes(cmv_x, cmv_y, v_max=info['v_max'])
     
     cmv_x = cmv_x.reshape([nblock, nblock])
     cmv_y = cmv_y.reshape([nblock, nblock])
     
+    #print("QC removed")
+    cmv_x, cmv_y, nmf_u, nmf_v = rmSpuriousVectors(cmv_x, cmv_y, info)
+    
     cmv_x, cmv_y = flipVectors(cmv_x, cmv_y)
     
-    return cmv_x, cmv_y
+    return cmv_x, cmv_y, nmf_u, nmf_v
 
 
 
@@ -60,7 +67,7 @@ def flipVectors(cmv_x, cmv_y):
 
 
 
-def rmLargeValues(cmv_x, cmv_y, std_fact=1):
+def rmLargeValues(cmv_x, cmv_y, std_fact=3):
     """
     Remove large anomalous values. Not using direction.
 
@@ -70,7 +77,7 @@ def rmLargeValues(cmv_x, cmv_y, std_fact=1):
     cmv_y : v component of CMV.
     
     std_fact : TYPE, optional
-        DESCRIPTION. The default is 1.
+        DESCRIPTION. check the default value.
 
     Returns
     -------
@@ -85,11 +92,99 @@ def rmLargeValues(cmv_x, cmv_y, std_fact=1):
     
     
     for i in range(0, cmv_x.size):
-            if vmag[i] > vmag_std * std_fact:
+            if abs(vmag[i]) > vmag_std * std_fact:
                 cmv_x[i] = 0
                 cmv_y[i] = 0
     
     return cmv_x, cmv_y
+
+
+def rmLargeMagnitudes(cmv_x, cmv_y, v_max):
+    """
+    Remove large anomalous values. Not using direction.
+
+    Parameters
+    ----------
+    cmv_x : u component of CMV.
+    cmv_y : v component of CMV.
+    
+    std_fact : TYPE, optional
+        DESCRIPTION. check the default value.
+
+    Returns
+    -------
+    cmv_x : Corrected u component of CMV.
+    cmv_y : Corrected v component of CMV.
+        DESCRIPTION.
+        
+    @ToDo: Trim the cmv (not remove) for large magnitude by the ratio 
+    vmag/v_max.
+    """
+    
+    vmag, vdir = vectorMagnitudeDirection(cmv_x, cmv_y) 
+    cmv_x[np.where(abs(vmag)>v_max)]=0
+    cmv_y[np.where(abs(vmag)>v_max)]=0
+    
+    return cmv_x, cmv_y
+
+
+
+def rmSpuriousVectors(cmv_x, cmv_y, info):
+    """ Remove large anomalous values.
+    """
+    norm_fluct_u, norm_fluct_v  = getNormMedianFluctuation(cmv_x, cmv_y, info)
+    norm_fluct_mag = np.sqrt(norm_fluct_u**2 + norm_fluct_v**2)
+    error_flag = norm_fluct_mag > info['WS05-error_thres']
+    cmv_x[np.where(error_flag)] = 0
+    cmv_y[np.where(error_flag)] = 0
+    
+    return cmv_x, cmv_y, norm_fluct_u, norm_fluct_v
+
+
+def getNormMedianFluctuation(u, v, info):
+    """ Checking vector validity using normaliazed median fluctuatin method 
+    from Westerweel and Scarano (2005).
+    
+    
+    Westerweel, J., & Scarano, F. (2005). Universal outlier detection for PIV
+    data. Experiments in fluids, 39(6), 1096-1100.
+    """
+    d = info['WS05-neighborhood_dist']
+    eps = info['WS05-eps'] 
+    
+    norm_fluctuation_u = normFluctuation(u, d, eps)
+    norm_fluctuation_v = normFluctuation(v, d, eps)
+    
+    return norm_fluctuation_u, norm_fluctuation_v
+    
+
+
+def normFluctuation(vel_comp, d, eps): 
+    v_shape = vel_comp.shape   
+    norm_fluctuation = np.zeros(v_shape)
+    norm_fluctuation[:] = np.NaN
+    
+    for i in range(d, v_shape[0]-d):
+        for j in range(d, v_shape[1]-d):
+            neighborhood = vel_comp[i-d:i+d+1, j-d:j+d+1]
+            
+            #remove central point
+            neighborhood = neighborhood.flatten()
+            mid_point = int(np.floor(neighborhood.size/2))
+            neighborhood = np.delete(neighborhood, mid_point)
+            
+            neigh_median = np.median(neighborhood)
+            
+            fluctuation = vel_comp[i, j]-neigh_median
+            
+            residue = neighborhood-neigh_median
+            residue_median = np.median(np.abs(residue))
+
+            norm_fluctuation[i, j] = fluctuation/(residue_median+eps)
+            
+    return norm_fluctuation
+
+    
 
 
 def vectorMagnitudeDirection(cmv_x, cmv_y, std_fact=1):
@@ -125,7 +220,7 @@ def fftFlowVector(im1, im2, global_shift=True):
         return None
 
     crosscov = fftCrossCov(im1, im2)
-    sigma = (1/8) * min(crosscov.shape)
+    sigma = 3
     cov_smooth = ndimage.filters.gaussian_filter(crosscov, sigma)
     dims = np.array(im1.shape)
 
@@ -138,16 +233,19 @@ def fftFlowVector(im1, im2, global_shift=True):
     pshift = pshift - (dims - [rs, cs])
     return pshift
 
+
 def fftCrossCov(im1, im2):
     """ Computes cross correlation matrix using FFT method. """
     fft1_conj = np.conj(np.fft.fft2(im1))
     fft2 = np.fft.fft2(im2)
     normalize = abs(fft2 * fft1_conj)
-    normalize[normalize == 0] = 1  # prevent divide by zero error
+    min_value = normalize[[normalize > 0]].min()
+    normalize[normalize == 0] = min_value  # prevent divide by zero error
     cross_power_spectrum = (fft2 * fft1_conj)/normalize
     crosscov = np.fft.ifft2(cross_power_spectrum)
     crosscov = np.real(crosscov)
     return motionVector(crosscov)
+
 
 def motionVector(fft_mat):
     """ Rearranges the cross correlation matrix so that 'zero' frequency or DC
@@ -163,14 +261,13 @@ def motionVector(fft_mat):
         centered_t = np.concatenate((quad4, quad1), axis=0)
         centered_b = np.concatenate((quad3, quad2), axis=0)
         centered = np.concatenate((centered_b, centered_t), axis=1)
-        # Thus centered is formed by shifting the entries of fft_mat
+        # Thus center is formed by shifting the entries of fft_mat
         # up/left by [rs, cs] indices, or equivalently down/right by
         # (fft_mat.shape - [rs, cs]) indices, with edges wrapping. 
         return centered
     else:
         print('input to motionVector() should be a matrix')
         return
-
 
 
 def split2DArray(arr2d, nblock):
@@ -187,6 +284,14 @@ def split2DArray(arr2d, nblock):
 
 
 def meanCMV(u, v):
-    u_mean = u[(np.abs(u) > 0) | (np.abs(v) > 0)].mean()
-    v_mean = v[(np.abs(u) > 0) | (np.abs(v) > 0)].mean()
+    if(np.all(u==0)):
+        u_mean=0
+    else:
+        u_mean = u[(np.abs(u) > 0) | (np.abs(v) > 0)].mean()
+        
+    if(np.all(v==0)):
+        v_mean=0
+    else:
+        v_mean = v[(np.abs(u) > 0) | (np.abs(v) > 0)].mean()
+        
     return u_mean, v_mean
