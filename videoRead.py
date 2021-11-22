@@ -35,26 +35,53 @@ def openVideoFile(fname):
 
 
 
+
+
 def videoCropInfo(video_cap, nblock, block_len):
     frame_width = video_cap.get(cv.CAP_PROP_FRAME_WIDTH)
     frame_height = video_cap.get(cv.CAP_PROP_FRAME_HEIGHT)
     
+    crop_info = cropMarginInfo(frame_height, frame_width, nblock, block_len)
+    return crop_info
+
+
+
+
+
+def videoCropInfoWaggle(camera, nblock, block_len):
+    frame = camera.snapshot()
+    frame_height = frame.data.shape[0]
+    frame_width = frame.data.shape[1]
+    
+    crop_info = cropMarginInfo(frame_height, frame_width, nblock, block_len)
+    return crop_info
+    
+
+
+
+
+def cropMarginInfo(frame_height, frame_width, nblock, block_len):
     crop_len = block_len * nblock
     if(crop_len >= min([frame_height, frame_width])):
         exit("Error: The original frame size is smaller than \
              the provided crop-dimensions.")
+    cent_x = int(frame_width/2)
+    cent_y = int(frame_height/2)
     
     #crop a square region of interest to accomodate 
-    y1 = int((frame_height/2) - (nblock/2*block_len))
-    y2 = int((frame_height/2) + (nblock/2*block_len))
-    x1 = int((frame_width/2) - (nblock/2*block_len))
-    x2 = int((frame_width/2) + (nblock/2*block_len))
+    y1 = int(cent_y - crop_len/2)
+    y2 = int(cent_y + crop_len/2)
+    x1 = int(cent_x - crop_len/2)
+    x2 = int(cent_x + crop_len/2)
     
     #compute approximate central points of each block
     mid_loc = np.arange((block_len/2) - 1, nblock * block_len, block_len)
+    mid_loc= mid_loc.astype('int32')
     return dict(frame_width=frame_width, frame_height=frame_height, 
-                x1=x1, x2=x2, y1=y1, y2=y2, block_mid=mid_loc, 
-                nblock=nblock, block_len=block_len)
+                x1=x1, x2=x2, y1=y1, y2=y2, cent_x=cent_x, cent_y=cent_y, 
+                block_mid=mid_loc, nblock=nblock, block_len=block_len)
+
+
 
 
 
@@ -79,5 +106,5 @@ def readVideoFrame(fcount, capture):
     if not ret:
         capture.release()
         print("End of video reached!")
-        exit()
+        return -1, frame
     return fcount, frame
