@@ -40,8 +40,14 @@ def creatNetCDF(info):
     """
     #make output netCDF file
     dir_name = dirname(info['input'])
-    ofile_name ="CMV_" + basename(info['input']).replace(".mpg", ".nc")
-    ofile = join(dir_name, ofile_name)
+    
+    run_id = ('_i'+str(info['fleap'])+"f-l"+str(info['block_len'])
+    +'p-bgr'+str(info['channel'])+'-vmax'+str(info['v_max']).zfill(2)+'p-d'
+    +str(info['WS05-neighborhood_dist'])+'p-thrs'
+    +str(info['WS05-error_thres']))
+    
+    ofile_name ="CMV" + basename(info['input']).replace(".mpg", run_id+".nc")
+    ofile = join(dir_name, "sensitivity_test-V2", ofile_name)
     ncfile = Dataset(ofile, mode='w',format='NETCDF4_CLASSIC') 
     
     x_dim = ncfile.createDimension('x', info['nblock'])     
@@ -66,10 +72,31 @@ def creatNetCDF(info):
     u.units = 'pixel/time-steps'
     u.long_name = 'u component'
     
+    u_nmf = ncfile.createVariable('u_nmf', np.float32, ('index','x','y'), 
+                              zlib=True, complevel=9)
+    u_nmf.units = ''
+    u_nmf.long_name = 'Normalized median fluctuation of u component'
+    
+    v_nmf = ncfile.createVariable('v_nmf', np.float32, ('index','x','y'), 
+                              zlib=True, complevel=9)
+    v_nmf.units = ''
+    v_nmf.long_name = 'Normalized median fluctuation of v component'
+    
     v = ncfile.createVariable('v', np.float32, ('index','x','y'), 
                               zlib=True, complevel=9)
     v.units = 'pixel/time-steps'
     v.long_name = 'v component'
+    
+    u_global = ncfile.createVariable('u_global', np.float32, ('index'), 
+                              zlib=True, complevel=9)
+    u_global.units = 'pixel/time-steps'
+    u_global.long_name = 'u component of global CMV'
+    
+    v_global = ncfile.createVariable('v_global', np.float32, ('index'), 
+                              zlib=True, complevel=9)
+    v_global.units = 'pixel/time-steps'
+    v_global.long_name = 'v component of global CMV'
+    
     
     u_mean = ncfile.createVariable('u_mean', np.float32, ('index'), 
                                    zlib=True, complevel=9)
@@ -99,9 +126,12 @@ def writeGlobalAttributes(ncfile, info):
     ncfile.description = "CMVs computed over a suqare grid in the hemispheric camera images"
     ncfile.created = dt_string
     ncfile.input_video=info['input']
-    ncfile.BGR_chan=info['channel']
+    ncfile.channel = info['channel']
+    ncfile.channel_description = "0=Blue, 1=Green, 2=Red, 8=Red/Blue, 9=Gray"
     ncfile.original_width = info['frame_width']
     ncfile.original_height = info['frame_height']
+    ncfile.center_x = info['cent_x']
+    ncfile.center_y = info['cent_y']
     ncfile.crop_x1 = info['x1']
     ncfile.crop_x2 = info['x2']
     ncfile.crop_y1 = info['y1']
@@ -109,6 +139,10 @@ def writeGlobalAttributes(ncfile, info):
     ncfile.nblock = info['nblock']
     ncfile.block_len = info['block_len']
     ncfile.fleap = info['fleap']
+    ncfile.v_max = info['v_max']
+    ncfile.WS05_dist = info['WS05-neighborhood_dist']
+    ncfile.WS05_eps = info['WS05-eps']
+    ncfile.WS05_thres = info['WS05-error_thres']
     return
 
 
@@ -139,6 +173,52 @@ def writeCMVtoNC(nc_name, u, v, frame2_num, tcount):
     ncfile['v'][tcount, :, :] = v
     ncfile.close()
     return 
+
+
+
+def writeNMFtoNC(nc_name, u_nmf, v_nmf, frame2_num, tcount):
+    ncfile = Dataset(nc_name, mode="a")
+    #One of the writing functions must have following statement, 
+    #ncfile['index'][tcount] = frame2_num-1
+    ncfile['u_nmf'][tcount, :, :] = u_nmf
+    ncfile['v_nmf'][tcount, :, :] = v_nmf
+    ncfile.close()
+    return 
+
+
+
+def writeGlobalCMVtoNC(nc_name, ug, vg, frame2_num, tcount):
+    """
+    
+    Parameters
+    ----------
+    nc_name : String
+        NetCDF file to append the data.
+    u_mean : Numpy array
+
+    v_mean : Numpy array
+
+    frame2_num : Integer
+        Frame number of the second frame used in computing CMV.
+    tcount : Integer
+        Frame index to be written in the netCDF file.
+
+    Returns
+    -------
+    None.
+
+    """
+    ncfile = Dataset(nc_name, mode="a")
+    
+    #One of the writing functions must have following statement, 
+    #ncfile['index'][tcount] = frame2_num-1
+    
+    ncfile['u_global'][tcount] = ug
+    ncfile['v_global'][tcount] = vg
+    ncfile.close()
+    return 
+
+
 
 def writeMeanCMVtoNC(nc_name, u_mean, v_mean, frame2_num, tcount):
     """
