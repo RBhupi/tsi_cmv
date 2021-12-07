@@ -239,7 +239,10 @@ def fftCrossCov(im1, im2):
     fft1_conj = np.conj(np.fft.fft2(im1))
     fft2 = np.fft.fft2(im2)
     normalize = abs(fft2 * fft1_conj)
-    min_value = normalize[[normalize > 0]].min()
+    try:  min_value = normalize[(normalize > 0)].min()
+    except ValueError:  #raised if empty.
+        min_value=0.01
+        pass    
     normalize[normalize == 0] = min_value  # prevent divide by zero error
     cross_power_spectrum = (fft2 * fft1_conj)/normalize
     crosscov = np.fft.ifft2(cross_power_spectrum)
