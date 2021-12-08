@@ -50,7 +50,6 @@ def flowVectorSplit(array1, array2, info):
     cmv_x = cmv_x.reshape([nblock, nblock])
     cmv_y = cmv_y.reshape([nblock, nblock])
     
-    #print("QC removed")
     cmv_x, cmv_y, nmf_u, nmf_v = rmSpuriousVectors(cmv_x, cmv_y, info)
     
     return cmv_x, cmv_y, nmf_u, nmf_v
@@ -230,8 +229,9 @@ def fftCrossCov(im1, im2):
     normalize = abs(fft2 * fft1_conj)
     try:  min_value = normalize[(normalize > 0)].min()
     except ValueError:  #raised if empty.
-       min_value=0.01
-       pass 
+        min_value=0.01
+        pass 
+
     normalize[normalize == 0] = min_value  # prevent divide by zero error
     cross_power_spectrum = (fft2 * fft1_conj)/normalize
     crosscov = np.fft.ifft2(cross_power_spectrum)
