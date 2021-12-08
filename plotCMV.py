@@ -22,7 +22,7 @@ parser = argparse.ArgumentParser(description='''This program cloud motion vector
 #parser.add_argument('--video', type=str, help='Path to an input video or images.', 
 #                    default="./data/sgptsimovieS01.a1.20160726.000000.mpg")
 parser.add_argument('--cmv', type=str, help='CMV data file.', 
-                    default="./data/sgptsimovieS01.a1.20160726.000000_i")
+                    default="/Users/bhupendra/projects/cloud_motion/Python/CMV/data/sensitivity_test-V3/CMVsgptsimovieS01.a1.20160726.000000_i1f-l20p-bgr8-vmax07p-d1p-thrs2.nc")
 
 args = parser.parse_args()
 
@@ -48,7 +48,7 @@ inf = videoCropInfo(video_cap, nblock, block_len)
 fcount = 0
 tcount = 0
 plt.ion()
-fig, axs = plt.subplots(3, 3)
+
 for i in range(0, nframes_video-1):
     fcount, frame = readVideoFrame(fcount, video_cap)
     
@@ -81,12 +81,11 @@ for i in range(0, nframes_video-1):
     #v_mean = v[(np.abs(u)>0) | (np.abs(v)>0)].mean()
     
     
-    axs[0, 0].imshow(sky)
-    axs[0, 0].quiver(200, 200, u_mean, v_mean, scale=10, color="r")
-    #plt.quiver(185, 185, u_global, v_global, scale=10, color="b")
-    #plt.quiver(x, y, u, v, scale=50, color='dimgrey', width=0.005)
-    fig_path = "./plots/image"+f'{tcount:05d}'+".jpg"
-    plt.savefig(fig_path)
+    plt.imshow(sky, origin="lower")
+    plt.quiver(185, 185, u_mean, v_mean, scale=10, color="b")
+    plt.quiver(x, y, u, v, scale=25, color='dimgrey', width=0.005)
+    #fig_path = "./plots/image"+f'{tcount:05d}'+".jpg"
+    #plt.savefig(fig_path)
     plt.pause(0.5)
     plt.close()
     

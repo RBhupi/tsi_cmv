@@ -47,7 +47,7 @@ def creatNetCDF(info):
     +str(info['WS05-error_thres']))
     
     ofile_name ="CMV" + basename(info['input']).replace(".mpg", run_id+".nc")
-    ofile = join(dir_name, "sensitivity_test-V2", ofile_name)
+    ofile = join(dir_name, "sensitivity_test-V3", ofile_name)
     ncfile = Dataset(ofile, mode='w',format='NETCDF4_CLASSIC') 
     
     x_dim = ncfile.createDimension('x', info['nblock'])     
