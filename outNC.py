@@ -47,7 +47,7 @@ def creatNetCDF(info):
     +str(info['WS05-error_thres']))
     
     ofile_name ="CMV" + basename(info['input']).replace(".mpg", run_id+".nc")
-    ofile = join(dir_name, "SGP-C01", ofile_name)
+    ofile = join(dir_name, "CMV_SGP-C01_V2", ofile_name)
     ncfile = Dataset(ofile, mode='w',format='NETCDF4_CLASSIC') 
     
     x_dim = ncfile.createDimension('x', info['nblock'])     
@@ -67,7 +67,7 @@ def creatNetCDF(info):
     time.units = 'seconds since 1970-01-01 00:00:00 +00:00:00'
     time.long_name = 'frame2 time'
     
-    u = ncfile.createVariable('u', np.float32, ('time','x','y'), 
+    u = ncfile.createVariable('u', np.float32, ('time','y','x'), 
                               zlib=True, complevel=9)
     u.units = 'pixel/time-steps'
     u.long_name = 'u component'
@@ -82,7 +82,7 @@ def creatNetCDF(info):
     #v_nmf.units = ''
     #v_nmf.long_name = 'Normalized median fluctuation of v component'
     
-    v = ncfile.createVariable('v', np.float32, ('time','x','y'), 
+    v = ncfile.createVariable('v', np.float32, ('time','y','x'), 
                               zlib=True, complevel=9)
     v.units = 'pixel/time-steps'
     v.long_name = 'v component'

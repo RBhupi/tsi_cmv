@@ -25,11 +25,11 @@ import cv2 as cv
 
 
 def getMatchingFileNames(args):
-    files_mpg = glob.glob(args.indir+"/sgpt*C1*.mpg")
+    files_mpg = glob.glob(args.indir+"/sgpt*C1*20170102*.mpg")
     files_dt = []
     file_exists = []
     
-    for fname in files_mpg:
+    for fname in files_mpg:         
         fname_dt = "dt_"+basename(fname).replace(".mpg", ".csv")
         dirname_dt = dirname(fname)
         dirname_dt=dirname_dt.replace("waggle-scott-tsi", "dt_waggle-scott-tsi")
@@ -125,7 +125,7 @@ def main():
     nblock = 10
     block_len = 40
     
-    for file_num in range(0, len(files_mpg)):
+    for file_num in range(len(files_mpg)):
         
         mpg_file = files_mpg[file_num]
         dt_file = files_dt[file_num]
@@ -148,7 +148,7 @@ def main():
         inf['fleap'] = 1
         inf['input'] = mpg_file
         inf["dt_file"] = dt_file
-    
+        
         inf['WS05-neighborhood_dist'] = 1
         inf['WS05-eps'] = 0.2
         inf['WS05-error_thres'] = 6

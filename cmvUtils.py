@@ -52,7 +52,20 @@ def flowVectorSplit(array1, array2, info):
     
     cmv_x, cmv_y, nmf_u, nmf_v = rmSpuriousVectors(cmv_x, cmv_y, info)
     
+    #cmv_x, cmv_y = flipVectors(cmv_x, cmv_y)
+    cmv_y = -cmv_y
+
     return cmv_x, cmv_y, nmf_u, nmf_v
+
+
+
+def flipVectors(cmv_x, cmv_y):
+    cmv_x_correct = np.flip(cmv_x, axis=0)
+    cmv_y_correct = np.flip(-cmv_y, axis=0)
+
+    return cmv_x_correct, cmv_y_correct
+    
+
 
 
 def rmLargeValues(cmv_x, cmv_y, std_fact=3):
